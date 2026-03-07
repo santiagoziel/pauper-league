@@ -18,6 +18,74 @@ model User {
   friendlyId String   @unique
   name      String
   salt     String
+  decks    Deck[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+enum DeckStatus {
+  VALID
+  INCOMPLETE
+  ILLEGAL
+  DEFAULT
+}
+
+model Deck {
+  id        String   @id @default(uuid())
+  name      String
+  tag       String
+  userId    String
+  status    DeckStatus
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sets CardSet[]
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Card {
+  id        String   @id @default(uuid())
+  name      String
+  link      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cardSets CardSet[]
+}
+
+model CardSet {
+  id        String   @id @default(uuid())
+  card    Card     @relation(fields: [cardId], references: [id])
+  cardId  String
+  amount Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deck    Deck     @relation(fields: [deckId], references: [id])
+  deckId  String
+}
+
+enum GameStatus { S
+  PENDING
+  REJECTED
+  COMPLETED
+  DELETED
+}
+
+model Game {
+  id        String   @id @default(uuid())
+  deck1Id  String
+  deck2Id  String
+  player1Result Int
+  player2Result Int
+  status    GameStatus
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+
+
+
+

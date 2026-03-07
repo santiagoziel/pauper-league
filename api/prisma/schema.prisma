@@ -36,6 +36,7 @@ model Deck {
   tag       String
   userId    String
   status    DeckStatus
+  colorIdentity String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -48,6 +49,7 @@ model Card {
   id        String   @id @default(uuid())
   name      String
   link      String
+  colorIdentity String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -87,6 +89,7 @@ model Archetype {
   id        String   @id @default(uuid())
   name      String @unique
   conditions ArchetypeCondition[]
+  colorIdentity String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -44,10 +44,3 @@ export class BrandedUString<B extends string> extends UString<string> {
 export const brandedUString = <B extends string>(value: string, brand: B) => new BrandedUString(value, brand);
 
 
-type UserId = BrandedUString<'UserId'>;
-const a: UserId = brandedUString('abc-123', 'UserId');
-
-type PolicyId = BrandedUString<'PolicyId'>;
-const b: PolicyId = brandedUString('def-456', 'PolicyId');
-
-

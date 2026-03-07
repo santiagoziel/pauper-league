@@ -39,7 +39,7 @@ model Deck {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sets CardSet[]
+  deckListRecords DeckListRecord[]
 
   user User @relation(fields: [userId], references: [id])
 }
@@ -59,14 +59,13 @@ model CardSet {
   card    Card     @relation(fields: [cardId], references: [id])
   cardId  String
   amount Int
+  deckListRecords DeckListRecord[]
+  archetypeConditions ArchetypeCondition[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  deck    Deck     @relation(fields: [deckId], references: [id])
-  deckId  String
 }
 
-enum GameStatus { S
+enum GameStatus {
   PENDING
   REJECTED
   COMPLETED
@@ -82,6 +81,30 @@ model Game {
   status    GameStatus
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Archetype {
+  id        String   @id @default(uuid())
+  name      String @unique
+  conditions ArchetypeCondition[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DeckListRecord {
+  id       String   @id @default(uuid())
+  deck    Deck    @relation(fields: [deckId], references: [id])
+  deckId  String
+  set     CardSet @relation(fields: [setId], references: [id])
+  setId   String
+}
+
+model ArchetypeCondition {
+  id        String   @id @default(uuid())
+  archetype Archetype @relation(fields: [archetypeId], references: [id])
+  archetypeId String
+  set     CardSet @relation(fields: [setId], references: [id])
+  setId   String
 }
 
 

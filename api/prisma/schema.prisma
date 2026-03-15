@@ -14,13 +14,13 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id         String   @id @default(uuid())
   friendlyId String   @unique
-  name      String
-  salt     String
-  decks    Deck[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  name       String
+  salt       String
+  decks      Deck[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 enum DeckStatus {
@@ -30,41 +30,49 @@ enum DeckStatus {
   DEFAULT
 }
 
+enum ClassificationStatus {
+  AUTO
+  TIE
+  MANUAL
+  UNCLASSIFIED
+}
+
+enum Board {
+  MAIN
+  SIDE
+}
+
 model Deck {
-  id        String   @id @default(uuid())
-  name      String
-  tag       String
-  userId    String
-  status    DeckStatus
-  colorIdentity String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                   String               @id @default(uuid())
+  name                 String
+  userId               String
+  status               DeckStatus
+  colorIdentity        String
+  archetypeId          String?
+  classificationStatus ClassificationStatus @default(UNCLASSIFIED)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
 
   deckListRecords DeckListRecord[]
+  classifications DeckClassification[]
+  gamesAsDeck1    Game[]           @relation("GamesAsDeck1")
+  gamesAsDeck2    Game[]           @relation("GamesAsDeck2")
 
-  user User @relation(fields: [userId], references: [id])
+  user      User       @relation(fields: [userId], references: [id])
+  archetype Archetype? @relation(fields: [archetypeId], references: [id])
 }
 
 model Card {
-  id        String   @id @default(uuid())
-  name      String
-  link      String
+  id            String   @id @default(uuid())
+  name          String   @unique
+  link          String
   colorIdentity String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  maxAmount     Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  cardSets CardSet[]
-}
-
-model CardSet {
-  id        String   @id @default(uuid())
-  card    Card     @relation(fields: [cardId], references: [id])
-  cardId  String
-  amount Int
-  deckListRecords DeckListRecord[]
+  deckListRecords     DeckListRecord[]
   archetypeConditions ArchetypeCondition[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 enum GameStatus {
@@ -75,43 +83,95 @@ enum GameStatus {
 }
 
 model Game {
-  id        String   @id @default(uuid())
-  deck1Id  String
-  deck2Id  String
+  id            String     @id @default(uuid())
+  deck1Id       String
+  deck2Id       String
   player1Result Int
   player2Result Int
-  status    GameStatus
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status        GameStatus
+  eventId       String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id])
+  deck1 Deck  @relation("GamesAsDeck1", fields: [deck1Id], references: [id])
+  deck2 Deck  @relation("GamesAsDeck2", fields: [deck2Id], references: [id])
+}
+
+enum ArchetypeCategory {
+  AGGRO
+  CONTROL
+  COMBO
+  AGGRO_COMBO
+  AGGRO_CONTROL
+  COMBO_CONTROL
+  MIDRANGE
+  RAMP
+  UNCLASSIFIED
 }
 
 model Archetype {
-  id        String   @id @default(uuid())
-  name      String @unique
-  conditions ArchetypeCondition[]
-  colorIdentity String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String             @id @default(uuid())
+  name              String             @unique
+  colorIdentity     String
+  category          ArchetypeCategory?
+  parentId          String?
+  minMatchThreshold Float              @default(0.6)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  parent          Archetype?           @relation("SubArchetypes", fields: [parentId], references: [id])
+  subArchetypes   Archetype[]          @relation("SubArchetypes")
+  conditions      ArchetypeCondition[]
+  decks           Deck[]
+  classifications DeckClassification[]
+
+  @@index([colorIdentity])
 }
 
 model DeckListRecord {
-  id       String   @id @default(uuid())
-  deck    Deck    @relation(fields: [deckId], references: [id])
-  deckId  String
-  set     CardSet @relation(fields: [setId], references: [id])
-  setId   String
+  id     String @id @default(uuid())
+  deckId String
+  cardId String
+  amount Int
+  board  Board  @default(MAIN)
+
+  deck Deck @relation(fields: [deckId], references: [id])
+  card Card @relation(fields: [cardId], references: [id])
+
+  @@unique([deckId, cardId, board])
 }
 
 model ArchetypeCondition {
-  id        String   @id @default(uuid())
-  archetype Archetype @relation(fields: [archetypeId], references: [id])
+  id          String @id @default(uuid())
   archetypeId String
-  set     CardSet @relation(fields: [setId], references: [id])
-  setId   String
+  cardId      String
+  minAmount   Int    @default(1)
+
+  archetype Archetype @relation(fields: [archetypeId], references: [id])
+  card      Card      @relation(fields: [cardId], references: [id])
+
+  @@unique([archetypeId, cardId])
 }
 
+model DeckClassification {
+  id          String @id @default(uuid())
+  deckId      String
+  archetypeId String
+  matchScore  Float
 
+  deck      Deck      @relation(fields: [deckId], references: [id])
+  archetype Archetype @relation(fields: [archetypeId], references: [id])
 
+  @@unique([deckId, archetypeId])
+}
 
-
-
+model Event {
+  id        String    @id @default(uuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime?
+  games     Game[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
